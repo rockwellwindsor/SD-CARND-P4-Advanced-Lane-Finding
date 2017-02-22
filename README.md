@@ -93,8 +93,79 @@ Steps of this project are the following:
 <p align="center"><img src="./images/chessboards-dist-undist.png" alt="End result"  /></p>
 
 * 3) Use color transforms, gradients, etc., to create a thresholded binary image.
+
     * Color transforms
+
+        * Sobel.  
+
+        Taken from stage 21. <strong>"Applying Sobel"</strong>.
+
+
+        ````
+
+        def abs_sobel_thresh(gray, orient='x', sobel_kernel=3, thresh=(0, 255)):
+            
+            # Apply x or y gradient
+            if orient == 'x':
+                sobel = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=sobel_kernel)
+            elif orient == 'y':
+                sobel = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=sobel_kernel)
+                
+            # Take the absolute values
+            sobel = np.absolute(sobel)
+            
+            # Rescale back to 8 bit integer
+            scaled_sobel = np.uint8(255*sobel/np.max(sobel))
+            
+            # Create a copy and apply the threshold
+            binary_output = np.zeros_like(scaled_sobel)
+            binary_output[(scaled_sobel > thresh[0]) & (scaled_sobel < thresh[1])] = 1
+            
+            # Return the result
+            return binary_output
+
+        ````
+
     * Gradient
+
+        * Magnitude of the gradient.
+
+        Taken from stage 22, <strong>"Magnitude of the Gradient"</strong>.
+
+
+        ````
+
+        def mag_thresh(gray, sobel_kernel=3, mag_thresh=(0, 255)):
+            
+            # 1) Already converted to Grayscale
+            
+            # 2) Take both Sobel x and y gradients
+            sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=sobel_kernel)
+            sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=sobel_kernel)
+            
+            # 3) Calculate the gradient magnitude
+            gradmag = np.sqrt(sobelx ** 2 + sobely ** 2)
+            
+            # 4) Rescale to 8 bit 
+            scale_factor = np.max(gradmag)/255 
+            gradmag = (gradmag/scale_factor).astype(np.uint8) 
+            
+            # 5) Create a binary image of ones where threshold is met, zeros otherwise
+            binary_output = np.zeros_like(scaled_sobel)
+            binary_output[(scaled_sobel > mag_thresh[0]) & (scaled_sobel < mag_thresh[1])] = 1
+
+            return binary_output
+
+        ````
+
+        * Direction of the gradient
+
+        Taken from stage 23, <strong>"Direction of the Gradient"</strong>.
+        
+
+        ````
+        ````
+
 
 * 4) Apply a perspective transform to rectify binary image ("birds-eye view").
     * Perspective transform
