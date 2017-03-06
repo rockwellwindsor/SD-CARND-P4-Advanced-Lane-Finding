@@ -346,4 +346,4 @@ The goals / steps of this project are the following:
 * Video
 ---
 <p align="center"><img src="./images/thumbnail.png" alt="End result"  /></p>
-You can watch the video of the result on the project.mp4 video [here](). 
+You can watch the video of the result on the project.mp4 video [here](https://youtu.be/_LZDgKu6o1U). 
