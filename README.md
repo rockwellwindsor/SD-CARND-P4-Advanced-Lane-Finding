@@ -3,19 +3,18 @@
 [![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 
 ---
-### Objective
+**Advanced Lane Finding Project**
 
-The main objective of this project is to write a software pipeline to identify the lane boundaries in a video.  With the main output or product being the creation of a detailed writeup of the project.   
+The goals / steps of this project are the following:
 
-Steps of this project are the following:
-* 1) Compute the camera calibration matrix and distortion coefficients given a set of chessboard images.
-* 2) Apply a distortion correction to raw images.
-* 3) Use color transforms, gradients, etc., to create a thresholded binary image.
-* 4) Apply a perspective transform to rectify binary image ("birds-eye view").
-* 5) Detect lane pixels and fit to find the lane boundary.
-* 6) Determine the curvature of the lane and vehicle position with respect to center.
-* 7) Warp the detected lane boundaries back onto the original image.
-* 8) Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
+* Compute the camera calibration matrix and distortion coefficients given a set of chessboard images.
+* Apply a distortion correction to raw images.
+* Use color transforms, gradients, etc., to create a thresholded binary image.
+* Apply a perspective transform to rectify binary image ("birds-eye view").
+* Detect lane pixels and fit to find the lane boundary.
+* Determine the curvature of the lane and vehicle position with respect to center.
+* Warp the detected lane boundaries back onto the original image.
+* Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
 
 ### Steps
 ---
@@ -157,6 +156,7 @@ Steps of this project are the following:
             return binary_output
 
         ````
+<p align="center"><img src="./image/preprocessed_0.jpg" alt="End result"  /></p>
 
         * Direction of the gradient
 
@@ -164,6 +164,24 @@ Steps of this project are the following:
         
 
         ````
+        # Calculate gradient direction
+        ### Code taken from stage 23, "Direction of the Gradient"
+        def dir_threshold(image, sobel_kernel=3, thresh=(0, np.pi/2)):
+            
+            # 1 grayscale image
+            gray = grayscale(image)
+            
+            # 2) Take the gradient in x and y separately
+            sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=sobel_kernel)
+            sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=sobel_kernel)
+            
+            # 3) Error statement to ignore division and invalid errors
+            direction = np.arctan(np.absolute(sobely),np.absolute(sobelx))
+            binary_output =  np.zeros_like(direction)
+            binary_output[(direction >= thresh[0]) & (direction <= thresh[1])] = 1
+            plt.imshow(binary_output)
+            # Return the result
+            return binary_output
         ````
 
 
@@ -195,15 +213,137 @@ Steps of this project are the following:
 * 5) Detect lane pixels and fit to find the lane boundary.
     * Fit
 * 6) Determine the curvature of the lane and vehicle position with respect to center.
-    * Curvature
-    * Vehicle position
+    * Curvature, Vehicle position
+        ````
+        ....
+
+        curve_centers = Tracker(Mywindow_width = window_width, Mywindow_height = window_height, Mymargin = 25, My_ym = 10/720, My_xm = 4/384, Mysmooth_factor = 15)
+
+        ....
+        ````
+        Calls the tracker class, this class was built in the Walk through video and the code is taken from there. This returns the position of the car in the image.
+        ````
+        class Tracker():
+            def __init__(self, Mywindow_width, Mywindow_height, Mymargin, My_ym = 1, My_xm = 1, Mysmooth_factor = 15):
+                
+                self.recent_centers = []
+                self.window_width = Mywindow_width
+                self.window_height = Mywindow_height
+                self.margin = Mymargin
+                self.ym_per_pix = My_ym
+                self.xm_per_pix = My_xm
+                self.smooth_factor = Mysmooth_factor
+                
+            def find_window_centroids(self, warped):
+                
+                window_width = self.window_width
+                window_height = self.window_height
+                margin = self.margin
+                
+                # Storing [left,right] pairs
+                window_centroids = []
+                window = np.ones(window_width)
+                
+                l_sum = np.sum(warped[int(3 * warped.shape[0] / 4):,:int(warped.shape[1] / 2)], axis=0)
+                l_center = np.argmax(np.convolve(window,l_sum)) - window_width / 2
+                
+                r_sum = np.sum(warped[int(3 * warped.shape[0] / 4):,int(warped.shape[1] / 2):], axis=0)
+                r_center = np.argmax(np.convolve(window,r_sum)) - window_width / 2 + int(warped.shape[1] / 2)
+                
+                window_centroids.append((l_center, r_center))
+                
+                for level in range(1,(int)(warped.shape[0]/window_height)):
+                   
+                    image_layer =  np.sum(warped[int(warped.shape[0] - (level + 1) * window_height):int(warped.shape[0] - level * window_height),:], axis=0)
+                    conv_signal = np.convolve(window, image_layer)
+                    
+                    offset = window_width / 2
+                    
+                    l_min_index = int(max(l_center + offset - margin, 0))
+                    l_max_index = int(min(l_center + offset + margin, warped.shape[1]))
+                    l_center = np.argmax(conv_signal[l_min_index:l_max_index]) + l_min_index - offset
+                    
+                    r_min_index = int(max(r_center + offset - margin, 0))
+                    r_max_index = int(min(r_center + offset + margin, warped.shape[1]))
+                    r_center = np.argmax(conv_signal[r_min_index:r_max_index]) + r_min_index - offset
+                    
+                    window_centroids.append((l_center,r_center))
+                    
+                self.recent_centers.append(window_centroids)
+                
+                return np.average(self.recent_centers[-self.smooth_factor:], axis=0)
+                
+        print("Tracker class is defined")
+        ````
 * 7) Warp the detected lane boundaries back onto the original image.
     * Warp
-* 8) Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
-    * Output display of lane boundries
-    * Generate numerical estimates
-        * Lane curvature
-        * Vehicle position
+    This code was taken from the walk through video.  It creates and array of left and right lane values taken from the warped image.
+    ````
+    ....
 
-### Acknowledgments
+    warped = cv2.warpPerspective(preprocessImage, M, image_size, flags=cv2.INTER_LINEAR)
+
+    ....
+    ````
+
+    ````
+    ...
+        yvals = range(0,warped.shape[0])
+    
+        res_yvals = np.arange(warped.shape[0]-(window_height / 2),0,-window_height)
+        
+        left_fit = np.polyfit(res_yvals, leftx, 2)
+        left_fitx = left_fit[0] * yvals * yvals + left_fit[1] * yvals + left_fit[2]
+        left_fitx = np.array(left_fitx, np.int32)
+        
+        right_fit = np.polyfit(res_yvals, rightx, 2)
+        right_fitx = right_fit[0] * yvals * yvals + right_fit[1] * yvals + right_fit[2]
+        right_fitx = np.array(right_fitx, np.int32)
+        
+        left_lane = np.array(list(zip(np.concatenate((left_fitx - window_width / 2, left_fitx[::-1] + window_width / 2), axis=0), np.concatenate((yvals,yvals[::-1]),axis=0))),np.int32)
+        right_lane = np.array(list(zip(np.concatenate((right_fitx - window_width / 2, right_fitx[::-1] + window_width / 2), axis=0), np.concatenate((yvals,yvals[::-1]),axis=0))),np.int32)
+        middle_marker = np.array(list(zip(np.concatenate((right_fitx - window_width / 2, right_fitx[::-1] + window_width / 2), axis=0), np.concatenate((yvals,yvals[::-1]),axis=0))),np.int32)
+        
+        road = np.zeros_like(img)
+        road_bkg = np.zeros_like(img)
+        
+        cv2.fillPoly(road,[left_lane],color=[0,255,0])
+        cv2.fillPoly(road,[right_lane],color=[255,0,255])
+    ...
+    ````
+* 8) Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
+    * Generate numerical estimates
+        * Lane curvature, Vehicle position
+
+        The code below takes the values returned from the Tracker class and draws the lane lines.
+        ````
+        ...
+
+        res_yvals = np.arange(warped.shape[0]-(window_height / 2),0,-window_height)
+        
+        left_fit = np.polyfit(res_yvals, leftx, 2)
+        left_fitx = left_fit[0] * yvals * yvals + left_fit[1] * yvals + left_fit[2]
+        left_fitx = np.array(left_fitx, np.int32)
+        
+        right_fit = np.polyfit(res_yvals, rightx, 2)
+        right_fitx = right_fit[0] * yvals * yvals + right_fit[1] * yvals + right_fit[2]
+        right_fitx = np.array(right_fitx, np.int32)
+        
+        left_lane = np.array(list(zip(np.concatenate((left_fitx - window_width / 2, left_fitx[::-1] + window_width / 2), axis=0), np.concatenate((yvals,yvals[::-1]),axis=0))),np.int32)
+        right_lane = np.array(list(zip(np.concatenate((right_fitx - window_width / 2, right_fitx[::-1] + window_width / 2), axis=0), np.concatenate((yvals,yvals[::-1]),axis=0))),np.int32)
+        middle_marker = np.array(list(zip(np.concatenate((right_fitx - window_width / 2, right_fitx[::-1] + window_width / 2), axis=0), np.concatenate((yvals,yvals[::-1]),axis=0))),np.int32)
+        
+        road = np.zeros_like(img)
+        road_bkg = np.zeros_like(img)
+        
+        cv2.fillPoly(road,[left_lane],color=[0,255,0])
+        cv2.fillPoly(road,[right_lane],color=[255,0,255])
+        cv2.fillPoly(road_bkg,[left_lane],color=[255,255,255])
+        cv2.fillPoly(road_bkg,[right_lane],color=[255,255,255])
+
+        ...
+        ````
+* Video
 ---
+<p align="center"><img src="./images/thumbnail.png" alt="End result"  /></p>
+You can watch the video of the result on the project.mp4 video [here](). 
