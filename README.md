@@ -16,10 +16,14 @@ The goals / steps of this project are the following:
 * Warp the detected lane boundaries back onto the original image.
 * Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
 
-### Steps
+# Rubric Discussion
 ---
 
-* 1) Compute the camera calibration matrix and distortion coefficients given a set of chessboard images.
+## Camera Callibration
+
+#### Briefly state how you computed the camera matrix and distortion coefficients. Provide an example of a distortion corrected calibration image.
+
+* Compute the camera calibration matrix and distortion coefficients given a set of chessboard images.
     * Camera callibration
 
         This code was taken from the lesson on stage 9 <strong>"Finding Corners"</strong>
@@ -63,7 +67,7 @@ The goals / steps of this project are the following:
 
 <p align="center"><img src="./images/chessboards-lines.png" alt="End result"  /></p>
 
-* 2) Apply a distortion correction to raw images.
+* Apply a distortion correction to raw images.
     * Distortion correction 
 
         This code comes from stage 11 <strong>"Correcting for Distortion"</strong>
@@ -87,11 +91,26 @@ The goals / steps of this project are the following:
 
     ````
 
-    Produces the undistorted image below.
+### 1. Provide an example of a distortion-corrected image.
+
+Below is an example of a distorted image and undistorted image side by side.
 
 <p align="center"><img src="./images/chessboards-dist-undist.png" alt="End result"  /></p>
 
-* 3) Use color transforms, gradients, etc., to create a thresholded binary image.
+## Pipeline (Images)
+---
+
+This section will discuss distortion correction, color transforms, gradients, perspective transform, identifying lane lines, calculating radius curavature.
+
+#### Provide an example of a distortion-corrected image.
+
+The image below is an example image with the distortion corrected.
+
+<p align="center"><img src="./images/dis_undist.png" alt="End result"  /></p>
+
+### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image. Provide an example of a binary image result.
+
+* Use color transforms, gradients, etc., to create a thresholded binary image.
 
     * Color transforms
 
@@ -185,12 +204,26 @@ The goals / steps of this project are the following:
         ````
 
 
-* 4) Apply a perspective transform to rectify binary image ("birds-eye view").
+* Apply a perspective transform to rectify binary image ("birds-eye view").
     * Perspective transform
 
     This code comes from stage 17, <strong>"Undistort and Transform"</strong>
 
     ````
+    ...
+
+    def warp(img):
+        img_size = (img.shape[1], img.shape[0])
+        src = np.float32([ [700,450],[1200,720],[200,720],[575,450] ])
+        dst = np.float32([ [1000,0],[1200,720],[400,720],[400,0] ])
+        
+        M = cv2.getPerspectiveTransform(src, dst)
+        
+        warped = cv2.warpPerspective(img, M, img_size, flags=cv2.INTER_LINEAR)
+
+        return warped
+
+    ...
 
     t_image = mpimg.imread('test_images/test5.jpg')
 
@@ -206,13 +239,18 @@ The goals / steps of this project are the following:
 
     ````
 
-    Produces the undistorted image below.
+###3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
+
+Produces the warped image below.
 
 <p align="center"><img src="./images/perspective-transform.png" alt="End result"  /></p>
 
-* 5) Detect lane pixels and fit to find the lane boundary.
-    * Fit
-* 6) Determine the curvature of the lane and vehicle position with respect to center.
+
+## Pipeline (Video)
+
+###5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
+
+* Determine the curvature of the lane and vehicle position with respect to center.
     * Curvature, Vehicle position
         ````
         ....
@@ -275,45 +313,48 @@ The goals / steps of this project are the following:
                 
         print("Tracker class is defined")
         ````
-* 7) Warp the detected lane boundaries back onto the original image.
-    * Warp
-    This code was taken from the walk through video.  It creates and array of left and right lane values taken from the warped image.
-    ````
-    ....
+* Fit the detected lane boundaries back onto the original image.
 
-    warped = cv2.warpPerspective(preprocessImage, M, image_size, flags=cv2.INTER_LINEAR)
+This code was taken from the walk through video.  It creates and array of left and right lane values taken from the warped image.
+````
+....
 
-    ....
-    ````
+warped = cv2.warpPerspective(preprocessImage, M, image_size, flags=cv2.INTER_LINEAR)
 
-    ````
-    ...
-        yvals = range(0,warped.shape[0])
+....
+````
+
+````
+...
+    yvals = range(0,warped.shape[0])
+
+    res_yvals = np.arange(warped.shape[0]-(window_height / 2),0,-window_height)
     
-        res_yvals = np.arange(warped.shape[0]-(window_height / 2),0,-window_height)
-        
-        left_fit = np.polyfit(res_yvals, leftx, 2)
-        left_fitx = left_fit[0] * yvals * yvals + left_fit[1] * yvals + left_fit[2]
-        left_fitx = np.array(left_fitx, np.int32)
-        
-        right_fit = np.polyfit(res_yvals, rightx, 2)
-        right_fitx = right_fit[0] * yvals * yvals + right_fit[1] * yvals + right_fit[2]
-        right_fitx = np.array(right_fitx, np.int32)
-        
-        left_lane = np.array(list(zip(np.concatenate((left_fitx - window_width / 2, left_fitx[::-1] + window_width / 2), axis=0), np.concatenate((yvals,yvals[::-1]),axis=0))),np.int32)
-        right_lane = np.array(list(zip(np.concatenate((right_fitx - window_width / 2, right_fitx[::-1] + window_width / 2), axis=0), np.concatenate((yvals,yvals[::-1]),axis=0))),np.int32)
-        middle_marker = np.array(list(zip(np.concatenate((right_fitx - window_width / 2, right_fitx[::-1] + window_width / 2), axis=0), np.concatenate((yvals,yvals[::-1]),axis=0))),np.int32)
-        
-        road = np.zeros_like(img)
-        road_bkg = np.zeros_like(img)
-        
-        cv2.fillPoly(road,[left_lane],color=[0,255,0])
-        cv2.fillPoly(road,[right_lane],color=[255,0,255])
-    ...
-    ````
-* 8) Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
+    left_fit = np.polyfit(res_yvals, leftx, 2)
+    left_fitx = left_fit[0] * yvals * yvals + left_fit[1] * yvals + left_fit[2]
+    left_fitx = np.array(left_fitx, np.int32)
+    
+    right_fit = np.polyfit(res_yvals, rightx, 2)
+    right_fitx = right_fit[0] * yvals * yvals + right_fit[1] * yvals + right_fit[2]
+    right_fitx = np.array(right_fitx, np.int32)
+    
+    left_lane = np.array(list(zip(np.concatenate((left_fitx - window_width / 2, left_fitx[::-1] + window_width / 2), axis=0), np.concatenate((yvals,yvals[::-1]),axis=0))),np.int32)
+    right_lane = np.array(list(zip(np.concatenate((right_fitx - window_width / 2, right_fitx[::-1] + window_width / 2), axis=0), np.concatenate((yvals,yvals[::-1]),axis=0))),np.int32)
+    middle_marker = np.array(list(zip(np.concatenate((right_fitx - window_width / 2, right_fitx[::-1] + window_width / 2), axis=0), np.concatenate((yvals,yvals[::-1]),axis=0))),np.int32)
+    
+    road = np.zeros_like(img)
+    road_bkg = np.zeros_like(img)
+    
+    cv2.fillPoly(road,[left_lane],color=[0,255,0])
+    cv2.fillPoly(road,[right_lane],color=[255,0,255])
+...
+````
+
+* Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
     * Generate numerical estimates
         * Lane curvature, Vehicle position
+
+        ### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
         The code below takes the values returned from the Tracker class and draws the lane lines.
         ````
@@ -343,7 +384,23 @@ The goals / steps of this project are the following:
 
         ...
         ````
-* Video
----
+
+####6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
+
 <p align="center"><img src="./images/thumbnail.png" alt="End result"  /></p>
+
+### Video
+---
+
 You can watch the video of the result on the project.mp4 video [here](https://youtu.be/_LZDgKu6o1U). 
+
+
+## Project Discussion
+---
+
+The biggest area where I noticed this failing is during sharp turns.  The hardest cahllenge video really highlight this for me.  I did not have time to address this and get the project in on time however my initial idea sto solve that issue are:
+* Take a smaller area of interest to use.  Or, even better, have a dynamically shifting area of interest that somehow is optimized to adjust to road curvatures that shorten up the lane lines.
+    I think one of the biggest issues is that I am greating an area of interest that just simply will not work if the road curves too sharply and thus messing with the detection of lane lines.  By creating a shallower area of interest I can focus on grabing the lane lines that are still detected by not get thrown off when the road ends and my algorithm is still searching for lane line pixels.
+* This algorithm also fails when the light changes. 
+    Creating a pipline that can adjust and perhaps "try" a few different approaches of an optimal result is not returned would be ideal.  I think knowing what optimal means in this case would be a huge challenge.  I think developing a pipeline that assumes to know what the correct lane data is at any point would be the incorrect approach so how to make a pipeline that can adjust but still rely only on data to influence it's desicion will be a challenge.
+
