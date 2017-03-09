@@ -392,7 +392,7 @@ warped = cv2.warpPerspective(preprocessImage, M, image_size, flags=cv2.INTER_LIN
 ### Video
 ---
 
-You can watch the video of the result on the project.mp4 video [here](https://youtu.be/_LZDgKu6o1U). 
+You can watch the video of the result on the project.mp4 video [here](https://www.youtube.com/watch?v=QGtB2jtJM_Q). 
 
 
 ## Project Discussion
