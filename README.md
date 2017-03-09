@@ -399,8 +399,8 @@ You can watch the video of the result on the project.mp4 video [here](https://yo
 ---
 
 The biggest area where I noticed this failing is during sharp turns.  The hardest cahllenge video really highlight this for me.  I did not have time to address this and get the project in on time however my initial idea sto solve that issue are:
-* Take a smaller area of interest to use.  Or, even better, have a dynamically shifting area of interest that somehow is optimized to adjust to road curvatures that shorten up the lane lines.
-    I think one of the biggest issues is that I am greating an area of interest that just simply will not work if the road curves too sharply and thus messing with the detection of lane lines.  By creating a shallower area of interest I can focus on grabing the lane lines that are still detected by not get thrown off when the road ends and my algorithm is still searching for lane line pixels.
+* Take a smaller area of interest.  Or, even better, have a dynamically shifting area of interest that somehow is optimized to adjust to road curvatures that shorten up the lane lines.
+    I think one of the biggest issues is that I am creating an area of interest that just simply will not work if the road curves too sharply.  By creating a shallower area of interest I can focus on grabing the lane lines that are still detected by not get thrown off when the road ends and my algorithm is still searching for lane line pixels.
 * This algorithm also fails when the light changes. 
     Creating a pipline that can adjust and perhaps "try" a few different approaches of an optimal result is not returned would be ideal.  I think knowing what optimal means in this case would be a huge challenge.  I think developing a pipeline that assumes to know what the correct lane data is at any point would be the incorrect approach so how to make a pipeline that can adjust but still rely only on data to influence it's desicion will be a challenge.
 
